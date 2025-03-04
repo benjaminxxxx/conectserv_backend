@@ -10,10 +10,8 @@ class WhatsAppController extends Controller
     public function sendVerification(Request $request, $phoneNumber)
     {
         try {
-            // Configurar Twilio
+          
             $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-
-            // Enviar código de verificación por WhatsApp
             $verification = $twilio->verify->v2
                 ->services(env('TWILIO_SERVICE_SID'))
                 ->verifications
@@ -42,7 +40,7 @@ class WhatsAppController extends Controller
             if (!str_starts_with($phoneNumber, '+')) {
                 $phoneNumber = '+' . $phoneNumber;
             }
-            
+
             // Verificar código
             $verificationCheck = $twilio->verify->v2
                 ->services(env('TWILIO_SERVICE_SID'))
