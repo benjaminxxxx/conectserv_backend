@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\WhatsAppController;
+use App\Http\Controllers\ProfesionalController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -13,3 +14,5 @@ Route::get('/user', function (Request $request) {
 Route::apiResource('services', ServiceController::class);
 Route::post('/verify/whatsapp', [WhatsAppController::class, 'sendWhatsappVerification']);
 Route::post('/verify/check', [WhatsAppController::class, 'checkVerification']);
+Route::post('/profesionales', [ProfesionalController::class, 'store']);
+
