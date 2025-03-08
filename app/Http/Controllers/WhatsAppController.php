@@ -2,62 +2,91 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\VerificacionWhatsapp;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Twilio\Rest\Client;
+use Illuminate\Support\Facades\Http;
 
 class WhatsAppController extends Controller
 {
-    public function sendVerification(Request $request, $phoneNumber)
-    {
-        try {
-          
-            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-            $verification = $twilio->verify->v2
-                ->services(env('TWILIO_SERVICE_SID'))
-                ->verifications
-                ->create($phoneNumber, "whatsapp"); // Solo string, no array
-
-            return response()->json(['status' => $verification->status]);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-    public function checkVerification(Request $request)
+    public function sendWhatsappVerification(Request $request)
     {
         $request->validate([
-            'phoneNumber' => 'required|string',
-            'code' => 'required|string'
+            'numero' => 'required|string' //9 digitos + 2 minimos de codigo
         ]);
 
         try {
-            // Configurar Twilio
-            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            $codigoGenerado = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $token = env('WHATSAPP_ACCESS_TOKEN');
+            $phoneId = env('WHATSAPP_PHONE_ID');
+            $numero = (string) $request->input('numero');
 
-            $phoneNumber = $request->phoneNumber;
-            $code = $request->code;
+            VerificacionWhatsapp::create([
+                'numero' => $numero,
+                'codigo' => $codigoGenerado,
+                'fecha_expira' => Carbon::now()->addMinutes(1) // Expira en 1 minuto
+            ]);
 
-            if (!str_starts_with($phoneNumber, '+')) {
-                $phoneNumber = '+' . $phoneNumber;
-            }
+            $response = Http::withToken($token)->post("https://graph.facebook.com/v22.0/$phoneId/messages", [
+                "messaging_product" => "whatsapp",
+                "to" => $numero,
+                "type" => "text",
+                "text" => ["body" => "¡Hola! Su código de verificación para ConectServ es {$codigoGenerado}."]
+            ]);
 
-            // Verificar código
-            $verificationCheck = $twilio->verify->v2
-                ->services(env('TWILIO_SERVICE_SID'))
-                ->verificationChecks
-                ->create([
-                    'to' => $phoneNumber,
-                    'code' => $code
-                ]);
-
-            if ($verificationCheck->status === 'approved') {
-                return response()->json(['message' => 'Código verificado correctamente.']);
+            if ($response->successful()) {
+                return response()->json([
+                    "success" => true,
+                    "message" => "Mensaje enviado correctamente.",
+                    "data" => $response->json()
+                ], 200);
             } else {
-                return response()->json(['error' => 'Código incorrecto o expirado.'], 400);
+                return response()->json([
+                    "success" => false,
+                    "error" => "Error al enviar mensaje.",
+                    "details" => $response->json()
+                ], $response->status());
+            }
+        } catch (\Throwable $th) {
+            return response()->json([
+                "success" => false,
+                "error" => "Error al enviar mensaje.",
+                "details" => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkVerification(Request $request)
+    {
+        try {
+            // Validar que los datos existen en el request
+            $request->validate([
+                'numero' => 'required|string',
+                'codigo' => 'required|string' // Asegurar que se trate como cadena
+            ]);
+
+            // Obtener datos del request
+            $numero = $request->input('numero');
+            $codigo = (string) $request->input('codigo'); // Convertir a string por seguridad
+
+            // Buscar verificación válida
+            $verification = VerificacionWhatsapp::where('numero', $numero)
+                ->where('codigo', $codigo)
+                ->where('fecha_expira', '>', Carbon::now())
+                ->first();
+
+            if ($verification) {
+                // Eliminar código después de usarlo
+                $verification->delete();
+
+                return response()->json(["success" => true, "message" => "Código verificado."]);
+            } else {
+                return response()->json(["success" => false, "error" => "Código incorrecto o expirado."], 400);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(["success" => false, "error" => $e->getMessage()], 400);
         }
     }
 }

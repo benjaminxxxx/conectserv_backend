@@ -11,5 +11,5 @@ Route::get('/user', function (Request $request) {
 
 
 Route::apiResource('services', ServiceController::class);
-Route::post('/verify/{phoneNumber}', [WhatsAppController::class, 'sendVerification']);
+Route::post('/verify/whatsapp', [WhatsAppController::class, 'sendWhatsappVerification']);
 Route::post('/verify/check', [WhatsAppController::class, 'checkVerification']);
