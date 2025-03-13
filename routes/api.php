@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthSocialController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ServiceController;
@@ -15,4 +16,8 @@ Route::apiResource('services', ServiceController::class);
 Route::post('/verify/whatsapp', [WhatsAppController::class, 'sendWhatsappVerification']);
 Route::post('/verify/check', [WhatsAppController::class, 'checkVerification']);
 Route::post('/profesionales', [ProfesionalController::class, 'store']);
+
+Route::post('/verificar-google/{google_id}', [AuthSocialController::class, 'verificarGoogle']);
+Route::post('/login', [AuthSocialController::class, 'login']);
+
 

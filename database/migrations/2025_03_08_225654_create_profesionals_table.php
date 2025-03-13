@@ -16,8 +16,11 @@ return new class extends Migration {
             $table->string('nombre'); // Nombre del profesional
             $table->string('apellido'); // Apellido del profesional
             $table->integer('edad'); // Edad del profesional
+            $table->string('email')->unique(); // Email del profesional (único)
             $table->string('whatsapp')->unique(); // Número de WhatsApp (único)
             $table->string('clave'); // Clave encriptada
+            $table->string('google_id')->nullable()->unique(); // ID de Google (opcional)
+            $table->string('facebook_id')->nullable()->unique(); // ID de Facebook (opcional)
             $table->timestamps();
         });
     }

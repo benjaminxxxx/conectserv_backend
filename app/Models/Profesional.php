@@ -20,8 +20,11 @@ class Profesional extends Authenticatable
         'nombre',
         'apellido',
         'edad',
+        'email',
         'whatsapp',
         'clave',
+        'google_id',
+        'facebook_id',
     ];
 
     protected $hidden = ['clave']; // Oculta la clave en respuestas JSON
