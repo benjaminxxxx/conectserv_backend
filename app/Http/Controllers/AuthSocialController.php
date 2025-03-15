@@ -24,7 +24,7 @@ class AuthSocialController extends Controller
         return response()->json([
             'success' => false,
             'error' => 'El usuario no está registrado con Google.',
-        ], 404);
+        ], 200);
     }
     public function login(Request $request)
     {
