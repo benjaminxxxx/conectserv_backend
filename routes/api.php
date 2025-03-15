@@ -17,7 +17,7 @@ Route::post('/verify/whatsapp', [WhatsAppController::class, 'sendWhatsappVerific
 Route::post('/verify/check', [WhatsAppController::class, 'checkVerification']);
 Route::post('/profesionales', [ProfesionalController::class, 'store']);
 
-Route::post('/verificar-google/{google_id}', [AuthSocialController::class, 'verificarGoogle']);
+Route::get('/verificar-google/{google_id}', [AuthSocialController::class, 'verificarGoogle']);
 Route::post('/login', [AuthSocialController::class, 'login']);
 
 
