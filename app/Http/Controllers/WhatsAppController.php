@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Profesional;
 use App\Models\VerificacionWhatsapp;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Twilio\Rest\Client;
 use Illuminate\Support\Facades\Http;
 
 class WhatsAppController extends Controller
@@ -17,6 +17,19 @@ class WhatsAppController extends Controller
         ]);
 
         try {
+
+            $type = $request->input('type')??null;
+            if($type=='login'){
+                //en caso sea de tipo login el usuario ya debe existir para verificar
+                $profesional = Profesional::where('whatsapp',$request->input('numero'))->first();
+                if(!$profesional){
+                    return response()->json([
+                        "success" => false,
+                        "error" => "Error al enviar mensaje.",
+                        "details" => "El número no esta registrado en ninguna cuenta"
+                    ], 500);
+                }
+            }
             $codigoGenerado = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
             $token = env('WHATSAPP_ACCESS_TOKEN');
             $phoneId = env('WHATSAPP_PHONE_ID');

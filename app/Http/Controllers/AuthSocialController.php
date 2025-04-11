@@ -3,21 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Profesional;
+use App\Models\User;
 use Illuminate\Http\Request;
-
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Hash;
 class AuthSocialController extends Controller
 {
 
-    public function verificarGoogle(Request $request,$googleId)
+    public function verificarGoogle(Request $request, $googleId)
     {
         // Buscar si el profesional ya existe en la base de datos
-        $profesional = Profesional::where('google_id', $googleId)->first();
+        $user = User::where('google_id', $googleId)->with(['profesional'])->first();
 
-        if ($profesional) {
+        if ($user) {
             return response()->json([
                 'success' => true,
                 'message' => 'El usuario ya está registrado con Google.',
-                'data' => $profesional,
+                'data' => $user,
             ], 200);
         }
 
@@ -28,55 +31,82 @@ class AuthSocialController extends Controller
     }
     public function login(Request $request)
     {
-        // Validar los parámetros de entrada
-        $request->validate([
-            'medio' => 'required|string|in:google,facebook,default',
-            'id' => 'required|string', // Puede ser google_id, facebook_id o email
-            'clave' => 'nullable|string', // Obligatorio solo si el medio es "default"
+        $validator = validator($request->all(), [
+            'medio' => 'required|string|in:google,whatsapp,default,facebook',
+            'id' => 'required|string',
+            'clave' => 'nullable|string',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        $user = null;
         $profesional = null;
 
-        // Buscar el usuario según el medio de autenticación
+        // Buscar el usuario según el método de autenticación
         switch ($request->medio) {
             case 'google':
-                $profesional = Profesional::where('google_id', $request->id)->first();
+                $user = User::where('google_id', $request->id)->first();
                 break;
             case 'facebook':
-                $profesional = Profesional::where('facebook_id', $request->id)->first();
+                $user = User::where('facebook_id', $request->id)->first();
+                break;
+            case 'whatsapp':
+                $profesional = Profesional::where('whatsapp', $request->id)->first();
+                if ($profesional) {
+                    $user = $profesional->user;
+                }
                 break;
             case 'default':
-                $profesional = Profesional::where('email', $request->id)->first();
-                if (!$profesional || !password_verify($request->clave, $profesional->clave)) {
-                    return response()->json([
-                        'success' => false,
-                        'error' => 'Credenciales incorrectas.',
-                    ], 401);
+                $user = User::where('email', $request->id)->first();
+                if (!$user || !Hash::check($request->clave, $user->password)) {
+                    return response()->json(['success' => false, 'error' => 'Credenciales incorrectas.']);
                 }
                 break;
         }
 
-        // Verificar si el usuario existe
-        if (!$profesional) {
-            return response()->json([
-                'success' => false,
-                'error' => 'El usuario no está registrado.',
-            ], 404);
+        if (!$user) {
+            return response()->json(['success' => false, 'error' => 'El usuario no está registrado.']);
         }
 
-        // Retornar datos del usuario para la sesión
+        // Si es un profesional, obtener su información y validar su estado
+        if ($user->tipo_usuario === 'profesional') {
+            $profesional = Profesional::where('user_id', $user->id)->first();
+            if (!$profesional || in_array($profesional->estado, ['eliminado', 'bloqueado'])) {
+                return response()->json(['success' => false, 'error' => 'El usuario no tiene acceso.']);
+            }
+        }
+
+        // 🔥 **Generar el token JWT**
+        $payload = [
+            'sub' => $user->id,
+            'nombre' => $user->name,
+            'apellido' => $user->lastname,
+            'email' => $user->email,
+            'tipo_usuario' => $user->tipo_usuario,
+            'iat' => time(),
+            'exp' => time() + (60 * 60 * 24),
+        ];
+
+        $jwt = JWT::encode($payload, config('app.jwt_secret'), 'HS256');
+
         return response()->json([
             'success' => true,
             'message' => 'Login exitoso.',
+            'token' => $jwt,
             'data' => [
-                'id' => $profesional->id,
-                'nombre' => $profesional->nombre,
-                'apellido' => $profesional->apellido,
-                'email' => $profesional->email,
-                'whatsapp' => $profesional->whatsapp,
-                'medio' => $request->medio, // Indica con qué método inició sesión
+                'id' => $user->id,
+                'nombre' => $user->name,
+                'apellido' => $user->lastname,
+                'email' => $user->email,
+                'tipo_usuario' => $user->tipo_usuario,
+                'profesional' => $profesional, // Si aplica
             ],
-        ], 200);
+        ]);
     }
 
 }

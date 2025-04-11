@@ -7,26 +7,24 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up()
     {
-        Schema::create('profesionals', function (Blueprint $table) {
-            $table->id(); // ID único del profesional
-            $table->foreignId('servicio_id')->constrained('services')->onDelete('cascade'); // Relación con tabla de servicios
-            $table->string('ubicacion_texto'); // Dirección en texto
-            $table->decimal('latitud', 10, 7); // Coordenada de latitud
-            $table->decimal('longitud', 10, 7); // Coordenada de longitud
-            $table->string('nombre'); // Nombre del profesional
-            $table->string('apellido'); // Apellido del profesional
-            $table->integer('edad'); // Edad del profesional
-            $table->string('email')->unique(); // Email del profesional (único)
-            $table->string('whatsapp')->unique(); // Número de WhatsApp (único)
-            $table->string('clave'); // Clave encriptada
-            $table->string('google_id')->nullable()->unique(); // ID de Google (opcional)
-            $table->string('facebook_id')->nullable()->unique(); // ID de Facebook (opcional)
+        Schema::create('profesionales', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('servicio_id')->nullable()->constrained('services')->onDelete('set null');
+            $table->string('ubicacion_texto')->nullable();
+            $table->decimal('latitud', 10, 7)->nullable();
+            $table->decimal('longitud', 10, 7)->nullable();
+            $table->string('whatsapp')->nullable();
+            $table->boolean('verificado')->default(false);
+            $table->text('imagen_identidad_frontal')->nullable();
+            $table->text('imagen_identidad_dorso')->nullable();
+            $table->text('imagen_real')->nullable();
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('profesionals');
+        Schema::dropIfExists('profesionales');
     }
 };
