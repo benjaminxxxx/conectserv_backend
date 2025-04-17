@@ -208,7 +208,6 @@ class ProfesionalController extends Controller
     public function store(Request $request)
     {
         $validator = validator($request->all(), [
-            'servicio_id' => 'nullable|exists:services,id',
             'ubicacion_texto' => 'nullable|string',
             'latitud' => 'nullable|numeric',
             'longitud' => 'nullable|numeric',
@@ -220,6 +219,8 @@ class ProfesionalController extends Controller
             'clave' => 'nullable|string|min:6',
             'google_id' => 'nullable|string|unique:users,google_id',
             'facebook_id' => 'nullable|string|unique:users,facebook_id',
+            'servicios' => 'required|array', // Asegúrate de que se envíe un array de servicios
+            'servicios.*' => 'exists:servicios,id', // Cada servicio debe existir en la tabla servicios
         ], [
             'servicio_id.exists' => 'El servicio seleccionado no existe.',
             'email.unique' => 'El email ya está siendo utilizado.',
@@ -251,7 +252,6 @@ class ProfesionalController extends Controller
             $profesional = new Profesional();
             $profesional->fill([
                 'user_id' => $user->id,
-                'servicio_id' => $request->servicio_id,
                 'ubicacion_texto' => $request->ubicacion_texto ?? '',
                 'latitud' => $request->latitud ?? 0.0,
                 'longitud' => $request->longitud ?? 0.0,
@@ -259,6 +259,9 @@ class ProfesionalController extends Controller
                 'estado' => 'noverificado',
             ]);
             $profesional->save();
+
+            // Asociar los servicios al profesional
+            $profesional->servicios()->sync($request->servicios);
 
             DB::commit();
 

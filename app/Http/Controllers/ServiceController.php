@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Service;
+use App\Models\Servicio;
 use App\Http\Resources\ServiceResource;
 use Illuminate\Http\Request;
 
@@ -12,7 +12,7 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        return ServiceResource::collection(Service::all());
+        return ServiceResource::collection(Servicio::all());
     }
 
     /**
@@ -21,14 +21,14 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $request->validate(['name' => 'required|string|max:255']);
-        $service = Service::create(['name' => $request->name]);
+        $service = Servicio::create(['nombre' => $request->name]);
         return new ServiceResource($service);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Service $service)
+    public function show(Servicio $service)
     {
         return new ServiceResource($service);
     }
@@ -36,17 +36,17 @@ class ServiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Service $service)
+    public function update(Request $request, Servicio $service)
     {
         $request->validate(['name' => 'required|string|max:255']);
-        $service->update(['name' => $request->name]);
+        $service->update(['nombre' => $request->name]);
         return new ServiceResource($service);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Service $service)
+    public function destroy(Servicio $service)
     {
         $service->delete();
         return response()->json(['message' => 'Servicio eliminado'], 200);

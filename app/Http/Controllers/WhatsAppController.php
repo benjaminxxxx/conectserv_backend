@@ -13,16 +13,16 @@ class WhatsAppController extends Controller
     public function sendWhatsappVerification(Request $request)
     {
         $request->validate([
-            'numero' => 'required|string' //9 digitos + 2 minimos de codigo
+            'numero' => 'required|string'
         ]);
 
         try {
 
-            $type = $request->input('type')??null;
-            if($type=='login'){
+            $type = $request->input('type') ?? null;
+            if ($type == 'login') {
                 //en caso sea de tipo login el usuario ya debe existir para verificar
-                $profesional = Profesional::where('whatsapp',$request->input('numero'))->first();
-                if(!$profesional){
+                $profesional = Profesional::where('whatsapp', $request->input('numero'))->first();
+                if (!$profesional) {
                     return response()->json([
                         "success" => false,
                         "error" => "Error al enviar mensaje.",
@@ -41,11 +41,30 @@ class WhatsAppController extends Controller
                 'fecha_expira' => Carbon::now()->addMinutes(1) // Expira en 1 minuto
             ]);
 
-            $response = Http::withToken($token)->post("https://graph.facebook.com/v22.0/$phoneId/messages", [
+            $response = Http::withToken($token)->post("https://graph.facebook.com/v18.0/$phoneId/messages", [
                 "messaging_product" => "whatsapp",
                 "to" => $numero,
-                "type" => "text",
-                "text" => ["body" => "¡Hola! Su código de verificación para ConectServ es {$codigoGenerado}."]
+                "type" => "template",
+                "template" => [
+                    "name" => "codigo_otp",
+                    "language" => ["code" => "es"],
+                    "components" => [
+                        [
+                            "type" => "body",
+                            "parameters" => [
+                                ["type" => "text", "text" => $codigoGenerado]
+                            ]
+                        ],
+                        [
+                            "type" => "button",
+                            "sub_type" => "url",
+                            "index" => "0",
+                            "parameters" => [
+                                ["type" => "text", "text" => $codigoGenerado]
+                            ]
+                        ]
+                    ]
+                ]
             ]);
 
             if ($response->successful()) {

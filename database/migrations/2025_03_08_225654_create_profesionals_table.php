@@ -10,7 +10,6 @@ return new class extends Migration {
         Schema::create('profesionales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('servicio_id')->nullable()->constrained('services')->onDelete('set null');
             $table->string('ubicacion_texto')->nullable();
             $table->decimal('latitud', 10, 7)->nullable();
             $table->decimal('longitud', 10, 7)->nullable();

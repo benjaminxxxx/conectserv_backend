@@ -12,13 +12,23 @@ class Profesional extends Authenticatable
 
     protected $table = 'profesionales'; // Nombre de la tabla en la BD
 
-    protected $fillable = ['user_id', 'servicio_id', 'ubicacion_texto', 'latitud', 'longitud', 'whatsapp', 'verificado', 'imagen_identidad_frontal', 'imagen_identidad_dorso', 'imagen_real'];
+    protected $fillable = [
+        'user_id',
+        'ubicacion_texto',
+        'latitud',
+        'longitud',
+        'whatsapp',
+        'verificado',
+        'imagen_identidad_frontal',
+        'imagen_identidad_dorso',
+        'imagen_real'
+    ];
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function servicio()
+    public function servicios()
     {
-        return $this->belongsTo(Service::class, 'servicio_id');
+        return $this->belongsToMany(Servicio::class, 'profesional_servicio');
     }
 }

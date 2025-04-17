@@ -14,7 +14,7 @@ class SolicitudController extends Controller
         try {
             // Validar los datos
             $validatedData = $request->validate([
-                'servicio_id' => 'required|exists:services,id',
+                'servicio_id' => 'required|exists:servicios,id',
                 'ubicacion_texto' => 'required|string',
                 'latitud' => 'required|numeric|between:-90,90',
                 'longitud' => 'required|numeric|between:-180,180',

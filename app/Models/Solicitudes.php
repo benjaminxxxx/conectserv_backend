@@ -22,6 +22,6 @@ class Solicitudes extends Model
 
     public function servicio()
     {
-        return $this->belongsTo(Service::class, 'servicio_id');
+        return $this->belongsTo(Servicio::class, 'servicio_id');
     }
 }
