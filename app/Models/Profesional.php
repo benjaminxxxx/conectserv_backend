@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Storage;
 
 class Profesional extends Authenticatable
 {
@@ -30,5 +31,14 @@ class Profesional extends Authenticatable
     public function servicios()
     {
         return $this->belongsToMany(Servicio::class, 'profesional_servicio');
+    }
+    public function getUrlImagenIdentidadFrontalAttribute(){
+        return $this->imagen_identidad_frontal ? Storage::disk('public')->url($this->imagen_identidad_frontal) : null;
+    }
+    public function getUrlImagenIdentidadDorsoAttribute(){
+        return $this->imagen_identidad_dorso ? Storage::disk('public')->url($this->imagen_identidad_dorso) : null;
+    }
+    public function getUrlImagenRealAttribute(){
+        return $this->imagen_real ? Storage::disk('public')->url($this->imagen_real) : null;
     }
 }

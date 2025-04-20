@@ -120,7 +120,6 @@ class ProfesionalController extends Controller
         }
     }
 
-
     public function getUploadedDocs($id)
     {
         try {

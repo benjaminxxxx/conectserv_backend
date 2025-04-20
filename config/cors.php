@@ -18,7 +18,13 @@ return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['https://conectservfront.vercel.app', 'http://localhost:3000','https://www.conectserv.net','https://conectserv.net','http://www.conectserv.net'],
+    'allowed_origins' => [
+        'https://conectservfront.vercel.app', 
+        'http://localhost:3000',
+        'https://www.conectserv.net',
+        'https://conectserv.net',
+        'http://www.conectserv.net'
+    ],
 
     'allowed_origins_patterns' => [],
 

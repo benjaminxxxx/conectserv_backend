@@ -31,8 +31,11 @@ Route::post('/profesional/delete-document', [ProfesionalController::class, 'dele
 Route::post('/solicitudes', [SolicitudController::class, 'store']);
 
 
-Route::middleware('jwt.auth')->group(function () {
-    Route::get('/admin/dashboard/stats', [AdminDashboardController::class, 'getDashboardStats']);
+Route::prefix('admin')->middleware('jwt.auth')->group(function () {
+    Route::get('/dashboard/stats', [AdminDashboardController::class, 'getDashboardStats']);
+    Route::get('profesionales/listar/{page}/{profesion?}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'listar']);
+    Route::get('profesionales/aprobar/{uuid}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'aprobar']);
+    Route::get('profesionales/eliminar/{uuid}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'eliminar']);
 });
 
 
