@@ -61,7 +61,7 @@ class ProfesionalController extends Controller
     public function listar(Request $request, $page = 1, $profesion = null)
     {
         try {
-            $perPage = $request->get('per_page', 10); // Por defecto 10
+            $perPage = $request->get('per_page', 5); // Por defecto 10
 
             $query = Profesional::with(['user', 'servicios']);
 

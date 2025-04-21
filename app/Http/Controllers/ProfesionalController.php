@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Profesional;
 use App\Models\User;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -12,8 +13,128 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\Laravel\Facades\Image;
 class ProfesionalController extends Controller
 {
+    private function obtenerEstado($userId){
+
+        $user = User::with('profesional')->find($userId);
+        if (!$user->profesional) {
+            throw new Exception('Profesional no encontrado.');
+        }
+        if (!$user->profesional->imagen_identidad_frontal) {
+            return "imagen_identidad_frontal";
+        }
+        if (!$user->profesional->imagen_identidad_dorso) {
+            return "imagen_identidad_dorso";
+        }
+        if (!$user->profesional->imagen_real) {
+            return "imagen_real";
+        }
+
+        return "completo";
+    }
+    public function obtenerEstadoDocumento(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'user_id' => ['required', 'exists:users,id']
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        try {
+
+            $estado = $this->obtenerEstado($request->user_id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $estado
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ], 500);
+        }
+    }
+    public function subirDocumentoProfesional(Request $request)
+    {
+        $validator = validator($request->all(), [
+            'user_id' => ['required', 'exists:users,id'],
+            'tipo' => ['required', 'in:imagen_identidad_frontal,imagen_identidad_dorso,imagen_real'],
+            'documento' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:20000'], // 5MB máx.
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        $user = User::with('profesional')->find($request->user_id);
+        if (!$user->profesional) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Profesional no encontrado.',
+            ], 404);
+        }
+
+        $campo = $request->tipo;
+        $archivo = $request->file('documento');
+        $extension = $archivo->getClientOriginalExtension();
+        $fecha = now();
+        $carpeta = $fecha->year . '/' . $fecha->month;
+        $nombre = Str::random(16) . '.' . $extension;
+
+
+        try {
+            if (in_array($extension, ['jpeg', 'jpg', 'png', 'gif'])) {
+                // Redimensionar imagen si supera cierto tamaño (ej: ancho > 1200px)
+                $image = Image::read($request->file('documento'));
+                if ($image->width() > 1200 || $image->height() > 1200) {
+                    $image->scale(1200, 1200);
+                }
+
+                // Guardar imagen optimizada
+                $ruta = "$carpeta/$nombre";
+                Storage::disk('public')->put($ruta, (string) $image->encode());
+            } else {
+                // Archivos PDF u otros se suben directamente
+                $ruta = $archivo->storeAs($carpeta, $nombre, 'public');
+            }
+
+            $profesional = $user->profesional;
+
+            // Eliminar anterior si existe
+            if (!empty($profesional->{$campo}) && Storage::disk('public')->exists($profesional->{$campo})) {
+                Storage::disk('public')->delete($profesional->{$campo});
+            }
+
+            // Actualizar registro
+            $profesional->{$campo} = $ruta;
+            $profesional->save();
+
+            $estado = $this->obtenerEstado($user->id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Documento subido correctamente.',
+                'data' => $estado,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al subir el documento: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    //vamos a crear una version mejorada
     public function uploadDocs(Request $request)
     {
         $request->validate([

@@ -23,7 +23,7 @@ Route::get('/verificar-google/{google_id}', [AuthSocialController::class, 'verif
 Route::post('/login', [AuthSocialController::class, 'login']);
 
 Route::get('/profesionales/{id}/verificar-imagenes', [ProfesionalController::class, 'verificarImagenes']);
-Route::post('/profesional/subir-documentos', [ProfesionalController::class, 'uploadDocs']);
+//Route::post('/profesional/subir-documentos', [ProfesionalController::class, 'uploadDocs']);
 Route::get('/profesional/{id}/obtener-documentos', [ProfesionalController::class, 'getUploadedDocs']);
 Route::post('/profesional/delete-document', [ProfesionalController::class, 'deleteDocument']);
 
@@ -36,6 +36,9 @@ Route::prefix('admin')->middleware('jwt.auth')->group(function () {
     Route::get('profesionales/listar/{page}/{profesion?}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'listar']);
     Route::get('profesionales/aprobar/{uuid}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'aprobar']);
     Route::get('profesionales/eliminar/{uuid}', [\App\Http\Controllers\Admin\ProfesionalController::class, 'eliminar']);
+
+    Route::post('/profesional/subir-documentos', [ProfesionalController::class, 'subirDocumentoProfesional']);
+    Route::post('/profesional/estado-documento', [ProfesionalController::class, 'obtenerEstadoDocumento']);
 });
 
 
